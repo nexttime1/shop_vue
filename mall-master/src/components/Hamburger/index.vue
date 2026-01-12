@@ -12,20 +12,17 @@
   </div>
 </template>
 
-<script>
-export default {
-  name: 'hamburger',
-  props: {
-    isActive: {
-      type: Boolean,
-      default: false
-    },
-    toggleClick: {
-      type: Function,
-      default: null
-    }
+<script setup>
+defineProps({
+  isActive: {
+    type: Boolean,
+    default: false
+  },
+  toggleClick: {
+    type: Function,
+    default: null
   }
-}
+})
 </script>
 
 <style scoped>

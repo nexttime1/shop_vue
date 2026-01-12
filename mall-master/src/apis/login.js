@@ -1,61 +1,51 @@
 import request from '@/utils/request'
-let userUrl = "http://192.168.0.103:8021"
+
+/**
+ * 登錄相關接口 (封裝為相對路徑)
+ */
+
 export function login(params) {
   return request({
-    url:userUrl+'/u/v1/user/pwd_login',
-    method:'post',
-    data:params
-  })
-}
-export function getCaptcha(params) {
-  return request({
-    url:userUrl+'/u/v1/base/captcha',
-    method:'get'
+    url: '/u/v1/user/login',
+    method: 'post',
+    data: params
   })
 }
 
+export function getCaptcha() {
+  return request({
+    url: '/u/v1/base/captcha',
+    method: 'get'
+  })
+}
+
+// 以下接口在 shop.md 中有定義，但原本在此文件的路徑不正確，已修正
 export function createBrand(data) {
   return request({
-    url:'/brand/create',
-    method:'post',
-    data:data
-  })
-}
-export function updateShowStatus(data) {
-  return request({
-    url:'/brand/update/showStatus',
-    method:'post',
-    data:data
+    url: '/g/v1/brands',
+    method: 'post',
+    data: data
   })
 }
 
-export function updateFactoryStatus(data) {
+export function updateBrand(id, data) {
   return request({
-    url:'/brand/update/factoryStatus',
-    method:'post',
-    data:data
+    url: '/g/v1/brands/' + id,
+    method: 'put',
+    data: data
   })
 }
 
 export function deleteBrand(id) {
   return request({
-    url:'/brand/delete/'+id,
-    method:'get',
+    url: '/g/v1/brands/' + id,
+    method: 'delete'
   })
 }
 
 export function getBrand(id) {
   return request({
-    url:'/brand/'+id,
-    method:'get',
+    url: '/g/v1/brands/' + id,
+    method: 'get'
   })
 }
-
-export function updateBrand(id,data) {
-  return request({
-    url:'/brand/update/'+id,
-    method:'post',
-    data:data
-  })
-}
-

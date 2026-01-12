@@ -8,38 +8,59 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { computed, onBeforeMount, onMounted, onUnmounted } from 'vue'
+import { useAppStore } from '@/stores/app'
 import { Navbar, Sidebar, AppMain } from './components'
-import ResizeMixin from './mixin/ResizeHandler'
 
-export default {
-  name: 'layout',
-  components: {
-    Navbar,
-    Sidebar,
-    AppMain
-  },
-  mixins: [ResizeMixin],
-  computed: {
-    sidebar() {
-      return this.$store.state.app.sidebar
-    },
-    device() {
-      return this.$store.state.app.device
-    },
-    classObj() {
-      return {
-        hideSidebar: !this.sidebar.opened,
-        withoutAnimation: this.sidebar.withoutAnimation,
-        mobile: this.device === 'mobile'
-      }
+const appStore = useAppStore()
+
+const sidebar = computed(() => appStore.sidebar)
+const device = computed(() => appStore.device)
+
+const classObj = computed(() => ({
+  hideSidebar: !sidebar.value.opened,
+  withoutAnimation: sidebar.value.withoutAnimation,
+  mobile: device.value === 'mobile'
+}))
+
+const WIDTH = 1024
+const RATIO = 3
+
+const isMobile = () => {
+  const rect = document.body.getBoundingClientRect()
+  return rect.width - RATIO < WIDTH
+}
+
+const resizeHandler = () => {
+  if (!document.hidden) {
+    const mobile = isMobile()
+    appStore.toggleDevice(mobile ? 'mobile' : 'desktop')
+    if (mobile) {
+      appStore.closeSideBar(true)
     }
   }
 }
+
+onBeforeMount(() => {
+  window.addEventListener('resize', resizeHandler)
+})
+
+onMounted(() => {
+  const mobile = isMobile()
+  if (mobile) {
+    appStore.toggleDevice('mobile')
+    appStore.closeSideBar(true)
+  }
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', resizeHandler)
+})
 </script>
 
 <style rel="stylesheet/scss" lang="scss" scoped>
-  @import "src/styles/mixin.scss";
+  @import "@/styles/mixin.scss";
   .app-wrapper {
     @include clearfix;
     position: relative;

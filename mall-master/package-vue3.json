@@ -25,10 +25,8 @@
   "devDependencies": {
     "@vitejs/plugin-vue": "^4.5.2",
     "@vue/eslint-config-prettier": "^9.0.0",
-    "autoprefixer": "^10.4.23",
     "eslint": "^8.56.0",
     "eslint-plugin-vue": "^9.20.1",
-    "fast-glob": "^3.3.3",
     "sass": "^1.69.5",
     "vite": "^5.0.11",
     "vite-plugin-svg-icons": "^2.0.1"

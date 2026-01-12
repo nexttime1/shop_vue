@@ -42,102 +42,96 @@
     </el-form>
   </el-card>
 </template>
-<script>
-  import {createBrand, putBrands,getBrand} from '@/apis/goods'
-  import SingleUpload from '@/components/Upload/singleUpload'
-  const defaultBrand={
-    letter: '',
-    logo: '',
-    name: '',
-    sort: 0
-  };
-  export default {
-    name: 'BrandDetail',
-    components:{SingleUpload},
-    props: {
-      edit: {
-        type: Boolean,
-        default: false
-      }
-    },
-    data() {
-      return {
-        brand:Object.assign({}, defaultBrand),
-        isEdit: false,
-        rules: {
-          name: [
-            {required: true, message: '请输入品牌名称', trigger: 'blur'},
-          ],
-          logo: [
-            {required: true, message: '请输入品牌logo', trigger: 'blur'}
-          ],
-        }
-      }
-    },
-    created() {
-      if(this.$route.query.id) {
-        this.isEdit=true
-      } else {
-        this.isEdit =false
-      }
-      console.log('编辑平拍')
-      if (this.isEdit) {
-        getBrand(this.$route.query.id).then(response => {
-          this.brand = response;
-        });
-      }else{
-        this.brand = Object.assign({},defaultBrand);
-      }
-    },
-    methods: {
-      onSubmit(formName) {
-        this.$refs[formName].validate((valid) => {
-          if (valid) {
-            this.$confirm('是否提交数据', '提示', {
-              confirmButtonText: '确定',
-              cancelButtonText: '取消',
-              type: 'warning'
-            }).then(() => {
-              if (this.isEdit) {
-                putBrands(this.$route.query.id, this.brand).then(response => {
-                  this.$refs[formName].resetFields();
-                  this.$message({
-                    message: '修改成功',
-                    type: 'success',
-                    duration:1000
-                  });
-                  this.$router.back();
-                });
-              } else {
-                createBrand(this.brand).then(response => {
-                  // this.$refs[formName].resetFields();
-                  // this.brand = Object.assign({},defaultBrand);
-                  this.$message({
-                    message: '提交成功',
-                    type: 'success',
-                    duration:1000
-                  });
-                  this.$router.push('/brand')
-                });
-              }
-            });
+<script setup>
+import { ref, reactive, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { createBrand, putBrands, getBrand } from '@/apis/goods'
+import SingleUpload from '@/components/Upload/singleUpload'
 
-          } else {
-            this.$message({
-              message: '验证失败',
-              type: 'error',
-              duration:1000
-            });
-            return false;
-          }
-        });
-      },
-      resetForm(formName) {
-        this.$refs[formName].resetFields();
-        this.brand = Object.assign({},defaultBrand);
-      }
-    }
+const defaultBrand = {
+  letter: '',
+  logo: '',
+  name: '',
+  sort: 0
+}
+
+const route = useRoute()
+const router = useRouter()
+
+const brandFrom = ref(null)
+const brand = reactive({ ...defaultBrand })
+const isEdit = ref(false)
+const rules = {
+  name: [{ required: true, message: '请输入品牌名称', trigger: 'blur' }],
+  logo: [{ required: true, message: '请输入品牌logo', trigger: 'blur' }]
+}
+
+const loadDetail = () => {
+  const id = route.query.id
+  if (!id) {
+    Object.assign(brand, { ...defaultBrand })
+    return
   }
+  isEdit.value = true
+  getBrand(id).then(response => {
+    Object.assign(brand, response || {})
+  }).catch(() => {
+    // 待后端补接口：品牌详情
+    ElMessage.error('该功能暂未上线，后端待补充接口')
+  })
+}
+
+const onSubmit = () => {
+  if (!brandFrom.value) return
+  brandFrom.value.validate((valid) => {
+    if (!valid) {
+      ElMessage({
+        message: '验证失败',
+        type: 'error',
+        duration: 1000
+      })
+      return
+    }
+    ElMessageBox.confirm('是否提交数据', '提示', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    }).then(() => {
+      if (isEdit.value) {
+        putBrands(route.query.id, brand).then(() => {
+          brandFrom.value.resetFields()
+          ElMessage({
+            message: '修改成功',
+            type: 'success',
+            duration: 1000
+          })
+          router.back()
+        })
+      } else {
+        createBrand(brand).then(() => {
+          ElMessage({
+            message: '提交成功',
+            type: 'success',
+            duration: 1000
+          })
+          router.push('/brand')
+        })
+      }
+    })
+  })
+}
+
+const resetForm = () => {
+  if (brandFrom.value) {
+    brandFrom.value.resetFields()
+  }
+  Object.assign(brand, { ...defaultBrand })
+}
+
+onMounted(() => {
+  loadDetail()
+})
 </script>
 <style>
 </style>

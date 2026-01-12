@@ -6,36 +6,32 @@
   </div>
 </template>
 
-<script>
-const delta = 15
+<script setup>
+import { ref } from 'vue'
 
-export default {
-  name: 'scrollBar',
-  data() {
-    return {
-      top: 0
-    }
-  },
-  methods: {
-    handleScroll(e) {
-      const eventDelta = e.wheelDelta || -e.deltaY * 3
-      const $container = this.$refs.scrollContainer
-      const $containerHeight = $container.offsetHeight
-      const $wrapper = this.$refs.scrollWrapper
-      const $wrapperHeight = $wrapper.offsetHeight
-      if (eventDelta > 0) {
-        this.top = Math.min(0, this.top + eventDelta)
+const delta = 15
+const top = ref(0)
+const scrollContainer = ref(null)
+const scrollWrapper = ref(null)
+
+const handleScroll = (e) => {
+  const eventDelta = e.wheelDelta || -e.deltaY * 3
+  const $container = scrollContainer.value
+  const $containerHeight = $container.offsetHeight
+  const $wrapper = scrollWrapper.value
+  const $wrapperHeight = $wrapper.offsetHeight
+  
+  if (eventDelta > 0) {
+    top.value = Math.min(0, top.value + eventDelta)
+  } else {
+    if ($containerHeight - delta < $wrapperHeight) {
+      if (top.value < -($wrapperHeight - $containerHeight + delta)) {
+        top.value = top.value
       } else {
-        if ($containerHeight - delta < $wrapperHeight) {
-          if (this.top < -($wrapperHeight - $containerHeight + delta)) {
-            this.top = this.top
-          } else {
-            this.top = Math.max(this.top + eventDelta, $containerHeight - $wrapperHeight - delta)
-          }
-        } else {
-          this.top = 0
-        }
+        top.value = Math.max(top.value + eventDelta, $containerHeight - $wrapperHeight - delta)
       }
+    } else {
+      top.value = 0
     }
   }
 }

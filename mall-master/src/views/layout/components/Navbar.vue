@@ -1,53 +1,54 @@
 <template>
   <el-menu class="navbar" mode="horizontal">
-    <hamburger class="hamburger-container" :toggleClick="toggleSideBar" :isActive="sidebar.opened"></hamburger>
+    <hamburger class="hamburger-container" :toggle-click="toggleSideBar" :is-active="sidebar.opened"></hamburger>
     <breadcrumb></breadcrumb>
     <el-dropdown class="avatar-container" trigger="click">
       <div class="avatar-wrapper">
         <img class="user-avatar" :src="avatar">
-        <i class="el-icon-caret-bottom"></i>
+        <span class="el-dropdown-link">
+          <i class="el-icon-caret-bottom"></i>
+        </span>
       </div>
-      <el-dropdown-menu class="user-dropdown" slot="dropdown">
-        <router-link class="inlineBlock" to="/">
-          <el-dropdown-item>
-            首页
+      <template #dropdown>
+        <el-dropdown-menu class="user-dropdown">
+          <router-link class="inlineBlock" to="/">
+            <el-dropdown-item>
+              首页
+            </el-dropdown-item>
+          </router-link>
+          <el-dropdown-item divided>
+            <span @click="logout" style="display:block;">退出</span>
           </el-dropdown-item>
-        </router-link>
-        <el-dropdown-item divided>
-          <span @click="logout" style="display:block;">退出</span>
-        </el-dropdown-item>
-      </el-dropdown-menu>
+        </el-dropdown-menu>
+      </template>
     </el-dropdown>
   </el-menu>
 </template>
 
-<script>
-import { mapGetters } from 'vuex'
+<script setup>
+import { computed } from 'vue'
+import { useRouter } from 'vue-router'
+import { useAppStore } from '@/stores/app'
+import { useUserStore } from '@/stores/user'
 import Breadcrumb from '@/components/Breadcrumb'
 import Hamburger from '@/components/Hamburger'
-import {removeToken} from '@/utils/auth.js'
+import { removeToken } from '@/utils/auth.js'
 
-export default {
-  components: {
-    Breadcrumb,
-    Hamburger
-  },
-  computed: {
-    ...mapGetters([
-      'sidebar',
-      'avatar'
-    ])
-  },
-  methods: {
-    toggleSideBar() {
-      this.$store.dispatch('ToggleSideBar')
-    },
-    logout() {
-      removeToken()
-      this.$router.push('/login')
-      
-    }
-  }
+const router = useRouter()
+const appStore = useAppStore()
+const userStore = useUserStore()
+
+const sidebar = computed(() => appStore.sidebar)
+const avatar = computed(() => userStore.avatar)
+
+const toggleSideBar = () => {
+  appStore.toggleSideBar()
+}
+
+const logout = async () => {
+  await userStore.logOut()
+  removeToken()
+  router.push('/login')
 }
 </script>
 
@@ -92,4 +93,3 @@ export default {
   }
 }
 </style>
-

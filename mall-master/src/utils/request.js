@@ -1,6 +1,6 @@
 import axios from 'axios'
-import { Message, MessageBox } from 'element-ui'
-import store from '../store'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { useUserStore } from '@/stores/user'
 import { getToken } from '@/utils/auth'
 
 // 创建axios实例
@@ -9,11 +9,29 @@ const service = axios.create({
   timeout: 30000 // 请求超时时间
 })
 
+// 服务基础路径配置
+export const SERVICE_URLS = {
+  USER: 'http://192.168.163.1:8080',
+  GOODS: 'http://192.168.163.1:8081',
+  ORDER: 'http://192.168.163.1:8083',
+  UPLOAD: 'http://192.168.163.1:8084'
+}
+
 // request拦截器
 service.interceptors.request.use(config => {
-  // if (store.getters.token) {
-    config.headers['x-token'] = getToken()||'' // 让每个请求携带自定义token 请根据实际情况自行修改
-  // }
+  // 根据请求的 url 前缀自动设置 baseURL
+  if (config.url.startsWith('/u/')) {
+    config.baseURL = SERVICE_URLS.USER
+  } else if (config.url.startsWith('/g/')) {
+    config.baseURL = SERVICE_URLS.GOODS
+  } else if (config.url.startsWith('/o/')) {
+    config.baseURL = SERVICE_URLS.ORDER
+  } else if (config.url.startsWith('/up/') || config.url.startsWith('/oss/')) {
+    config.baseURL = SERVICE_URLS.UPLOAD
+  }
+
+  // 修改：将 x-token 改为 Token，匹配后端 c.GetHeader("Token")
+  config.headers['Token'] = getToken()||'' 
   return config
 }, error => {
   // Do something with request error
@@ -24,41 +42,44 @@ service.interceptors.request.use(config => {
 // respone拦截器
 service.interceptors.response.use(
   response => {
-  /**
-  * code为非200是抛错 可结合自己业务进行修改
-  */
-    const res = response
-    console.log('结果',res)
-    if (res.status != 200) {
-      Message({
-        message: res.msg,
+    const res = response.data
+    console.log('--- 後端接口返回數據 ---', res)
+
+    // 根据 shop.md，成功的 code 是 0
+    if (res.code !== 0) {
+      console.error('請求失敗，code:', res.code, 'msg:', res.msg)
+      ElMessage({
+        message: res.msg || '請求失敗',
         type: 'error',
-        duration: 3 * 1000
+        duration: 5 * 1000
       })
 
-      // 401:未登录;
-      if (res.status === 401) {
-        MessageBox.confirm('你已被登出，可以取消继续留在该页面，或者重新登录', '确定登出', {
-          confirmButtonText: '重新登录',
+      // 1001: 登录错误 / 未登录
+      if (res.code === 1001) {
+        ElMessageBox.confirm('你已被登出，可以取消繼續留在該頁面，或者重新登錄', '確定登出', {
+          confirmButtonText: '重新登錄',
           cancelButtonText: '取消',
           type: 'warning'
         }).then(() => {
-          store.dispatch('FedLogOut').then(() => {
-            location.reload()// 为了重新实例化vue-router对象 避免bug
+          const userStore = useUserStore()
+          userStore.fedLogOut().then(() => {
+            location.reload()
           })
-        })
-        this.$route.push('/login')
+        }).catch(() => {})
       }
-      return Promise.reject('error')
-    } 
-    // else {
-      return response.data
-    // }
+      return Promise.reject(new Error(res.msg || 'Error'))
+    } else {
+      console.log('請求成功，返回數據：', res.data)
+      return res.data
+    }
   },
   error => {
     console.log('err' + error)// for debug
-    Message({
-      message: error.msg,
+    const message = error.response && error.response.data && error.response.data.msg 
+      ? error.response.data.msg 
+      : error.message || '請求錯誤'
+    ElMessage({
+      message: message,
       type: 'error',
       duration: 3 * 1000
     })
